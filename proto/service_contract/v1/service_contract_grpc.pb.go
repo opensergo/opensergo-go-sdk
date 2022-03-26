@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.19.0
-// source: specification/proto/servicecontract.proto
+// source: opensergo/proto/service_contract/v1/service_contract.proto
 
-package metadata
+package v1
 
 import (
 	context "context"
@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MetadataServiceClient interface {
-	// ListServices list the full name of all services.
+	// ReportMetadata report Metadata to server
 	ReportMetadata(ctx context.Context, in *ReportMetadataRequest, opts ...grpc.CallOption) (*ReportMetadataReply, error)
 }
 
@@ -36,7 +36,7 @@ func NewMetadataServiceClient(cc grpc.ClientConnInterface) MetadataServiceClient
 
 func (c *metadataServiceClient) ReportMetadata(ctx context.Context, in *ReportMetadataRequest, opts ...grpc.CallOption) (*ReportMetadataReply, error) {
 	out := new(ReportMetadataReply)
-	err := c.cc.Invoke(ctx, "/opensergo.api.MetadataService/ReportMetadata", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/opensergo.proto.service_contract.v1.MetadataService/ReportMetadata", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (c *metadataServiceClient) ReportMetadata(ctx context.Context, in *ReportMe
 // All implementations must embed UnimplementedMetadataServiceServer
 // for forward compatibility
 type MetadataServiceServer interface {
-	// ListServices list the full name of all services.
+	// ReportMetadata report Metadata to server
 	ReportMetadata(context.Context, *ReportMetadataRequest) (*ReportMetadataReply, error)
 	mustEmbedUnimplementedMetadataServiceServer()
 }
@@ -82,7 +82,7 @@ func _MetadataService_ReportMetadata_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/opensergo.api.MetadataService/ReportMetadata",
+		FullMethod: "/opensergo.proto.service_contract.v1.MetadataService/ReportMetadata",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MetadataServiceServer).ReportMetadata(ctx, req.(*ReportMetadataRequest))
@@ -94,7 +94,7 @@ func _MetadataService_ReportMetadata_Handler(srv interface{}, ctx context.Contex
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var MetadataService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "opensergo.api.MetadataService",
+	ServiceName: "opensergo.proto.service_contract.v1.MetadataService",
 	HandlerType: (*MetadataServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -103,5 +103,5 @@ var MetadataService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "specification/proto/servicecontract.proto",
+	Metadata: "opensergo/proto/service_contract/v1/service_contract.proto",
 }
