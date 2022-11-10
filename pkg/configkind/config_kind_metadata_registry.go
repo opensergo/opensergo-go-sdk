@@ -43,7 +43,7 @@ func GetConfigKindMetadataRegistry() *ConfigKindMetadataRegistry {
 }
 
 // GetKindMetadataByInstance returns a ConfigKindMetadata by ConfigKind
-func (configKindMetadataRegistry *ConfigKindMetadataRegistry) GetKindMetadataByInstance(kind ConfigKind) ConfigKindMetadata {
+func (configKindMetadataRegistry ConfigKindMetadataRegistry) GetKindMetadataByInstance(kind ConfigKind) ConfigKindMetadata {
 	if kind == nil {
 		return ConfigKindMetadata{}
 	}
