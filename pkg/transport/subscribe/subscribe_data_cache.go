@@ -21,21 +21,21 @@ import (
 
 // SubscribeDataCache is a local-cache which cached all the config-data subscribed from opensergo-control-plane.
 type SubscribeDataCache struct {
-	// map[SubscribeKey] SubscribedData
+	// map[SubscribeKey] *SubscribedData
 	cache sync.Map
 }
 
 // UpdateSubscribedData to update the config-data by subscribeKey
 func (subscribeDataCache *SubscribeDataCache) UpdateSubscribedData(subscribeKey SubscribeKey, data []protoreflect.ProtoMessage, version int64) {
 	// TODO: guarantee the latest version
-	subscribeDataCache.cache.Store(subscribeKey, *NewSubscribedData(version, data))
+	subscribeDataCache.cache.Store(subscribeKey, NewSubscribedData(version, data))
 }
 
 // GetSubscribedData to get the config-data from cache by subscribeKey
-func (subscribeDataCache SubscribeDataCache) GetSubscribedData(subscribeKey SubscribeKey) SubscribedData {
+func (subscribeDataCache *SubscribeDataCache) GetSubscribedData(subscribeKey SubscribeKey) *SubscribedData {
 	load, _ := subscribeDataCache.cache.Load(subscribeKey)
 	if load == nil {
-		return SubscribedData{}
+		return nil
 	}
-	return load.(SubscribedData)
+	return load.(*SubscribedData)
 }

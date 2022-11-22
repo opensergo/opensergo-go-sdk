@@ -31,11 +31,6 @@ func NewConfigKindMetadata(kind ConfigKind, kindPbMessageType protoreflect.Messa
 	}
 }
 
-//// GetKindName returns the kindName of ConfigKindMetadata
-//func (configKindMetadata *ConfigKindMetadata) GetKindName() string {
-//	return configKindMetadata.GetConfigKind().GetName()
-//}
-
 // GetConfigKind returns the ConfigKind of ConfigKindMetadata
 func (configKindMetadata *ConfigKindMetadata) GetConfigKind() ConfigKind {
 	return configKindMetadata.kind

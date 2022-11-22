@@ -22,9 +22,6 @@ import (
 // ConfigKindMetadataRegistry is a local cache, witch stores all the ConfigKindMetadata supported by OpenSergo.
 type ConfigKindMetadataRegistry struct {
 
-	// TODO consider for ConfigKind maybe has several Properties,
-	// TODO should change the struct 'map[kindName] ConfigKindMetadata' to 'map[kindName] []ConfigKindMetadata',
-	// TODO for example, ConfigKind maybe has version, so the same kindName would have several ConfigKindMetadata
 	// map[kindName] ConfigKindMetadata
 	registry sync.Map
 }
@@ -43,7 +40,7 @@ func GetConfigKindMetadataRegistry() *ConfigKindMetadataRegistry {
 }
 
 // GetKindMetadataByInstance returns a ConfigKindMetadata by ConfigKind
-func (configKindMetadataRegistry ConfigKindMetadataRegistry) GetKindMetadataByInstance(kind ConfigKind) ConfigKindMetadata {
+func (configKindMetadataRegistry *ConfigKindMetadataRegistry) GetKindMetadataByInstance(kind ConfigKind) ConfigKindMetadata {
 	if kind == nil {
 		return ConfigKindMetadata{}
 	}
@@ -54,7 +51,7 @@ func (configKindMetadataRegistry ConfigKindMetadataRegistry) GetKindMetadataByIn
 }
 
 // GetKindMetadataByName returns a ConfigKindMetadata by kindName of ConfigKind
-func (configKindMetadataRegistry ConfigKindMetadataRegistry) GetKindMetadataByName(kindName string) ConfigKindMetadata {
+func (configKindMetadataRegistry *ConfigKindMetadataRegistry) GetKindMetadataByName(kindName string) ConfigKindMetadata {
 	if kindName == "" {
 		return ConfigKindMetadata{}
 	}

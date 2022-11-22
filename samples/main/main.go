@@ -64,7 +64,7 @@ func main() {
 	//openSergoClient.RegisterSubscribeInfo(rateLimitSubscribeInfo)
 
 	// unsubscribeConfig
-	//go unsubscribeConfig(openSergoClient, *rateLimitSubscribeKey)
+	go unsubscribeConfig(openSergoClient, *rateLimitSubscribeKey)
 
 	select {}
 }

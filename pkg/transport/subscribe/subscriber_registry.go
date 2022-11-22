@@ -41,13 +41,15 @@ func (subscriberRegistry *SubscriberRegistry) RegisterSubscriber(subscribeKey Su
 	}
 }
 
-// GetSubscribersAll returns all Subscriber
-func (subscriberRegistry SubscriberRegistry) GetSubscribersAll() sync.Map {
-	return subscriberRegistry.registry
+// RunWithRangeRegistry run func with range SubscriberRegistry, avoid copy sync.Map
+func (subscriberRegistry *SubscriberRegistry) RunWithRangeRegistry(runner func(key, value interface{}) bool) {
+	subscriberRegistry.registry.Range(func(key, value interface{}) bool {
+		return runner(key, value)
+	})
 }
 
 // GetSubscribersOf returns a Subscriber by SubscribeKey
-func (subscriberRegistry SubscriberRegistry) GetSubscribersOf(subscribeKey SubscribeKey) []Subscriber {
+func (subscriberRegistry *SubscriberRegistry) GetSubscribersOf(subscribeKey SubscribeKey) []Subscriber {
 	value, _ := subscriberRegistry.registry.Load(subscribeKey)
 	if value == nil {
 		return nil

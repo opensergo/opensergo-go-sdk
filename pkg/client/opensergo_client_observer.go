@@ -16,7 +16,6 @@ package client
 
 import (
 	"fmt"
-	"github.com/golang/groupcache"
 	"github.com/opensergo/opensergo-go/pkg/common/logging"
 	"github.com/opensergo/opensergo-go/pkg/configkind"
 	transportPb "github.com/opensergo/opensergo-go/pkg/proto/transport/v1"
@@ -33,86 +32,95 @@ import (
 type SubscribeConfigStreamObserver struct {
 	openSergoClient *OpenSergoClient
 
-	subscribeResponseChan  chan transportPb.SubscribeResponse
-	receiveGoroutineOpened groupcache.AtomicInt
-	handleGoroutineOpened  groupcache.AtomicInt
+	subscribeResponseChan chan *transportPb.SubscribeResponse
 }
 
 func NewSubscribeConfigStreamObserver(openSergoClient *OpenSergoClient) *SubscribeConfigStreamObserver {
-	return &SubscribeConfigStreamObserver{
-		subscribeResponseChan: make(chan transportPb.SubscribeResponse, 1024),
+	scObserver := &SubscribeConfigStreamObserver{
+		subscribeResponseChan: make(chan *transportPb.SubscribeResponse, 1024),
 		openSergoClient:       openSergoClient,
 	}
+	return scObserver
+}
+
+func (scObserver *SubscribeConfigStreamObserver) SetOpenSergoClient(openSergoClient *OpenSergoClient) {
+	scObserver.openSergoClient = openSergoClient
 }
 
 func (scObserver *SubscribeConfigStreamObserver) Start() {
-	if scObserver.receiveGoroutineOpened.Get() == 0 {
-		// keepalive OpensergoClient
-		logging.Info("[OpenSergo SDK] open observeReceive() goroutine to observe msg from opensergo-control-plane to subscribeResponseChannel.")
-		go scObserver.observeReceive()
-	}
-	if scObserver.handleGoroutineOpened.Get() == 0 {
-		// keepalive OpensergoClient
-		logging.Info("[OpenSergo SDK] open doHandle() goroutine to handle msg in subscribeResponseChannel.")
-		go scObserver.doHandle()
+	logging.Info("[OpenSergo SDK] starting SubscribeConfigStreamObserver.")
+
+	logging.Info("[OpenSergo SDK] open observeReceive() goroutine to observe msg from opensergo-control-plane to subscribeResponseChannel.")
+	go scObserver.doObserve()
+
+	logging.Info("[OpenSergo SDK] open doHandle() goroutine to handle msg in subscribeResponseChannel.")
+	go scObserver.doHandle()
+
+	logging.Info("[OpenSergo SDK] started SubscribeConfigStreamObserver with goroutines of doObserve() and doHandle().")
+}
+
+func (scObserver *SubscribeConfigStreamObserver) doObserve() {
+	for {
+		if scObserver.openSergoClient.subscribeConfigStreamPtr.Load().(*subscribeConfigStream).stream != nil {
+			subscribeResponse, err := scObserver.observeReceive()
+			if err == nil && subscribeResponse != nil {
+				scObserver.subscribeResponseChan <- subscribeResponse
+			}
+		}
 	}
 }
 
 // observeReceive receive message from opensergo-control-plane.
 //
-// Contains a recursive invoke.
 // Push the subscribeResponse into the subscribeResponseChan channel in SubscribeConfigStreamObserver
-func (scObserver *SubscribeConfigStreamObserver) observeReceive() {
+func (scObserver *SubscribeConfigStreamObserver) observeReceive() (resp *transportPb.SubscribeResponse, err error) {
 	// handle the panic of observeReceive()
 	defer func() {
 		if r := recover(); r != nil {
 			errRecover := errors.Errorf("%+v", r)
-			logging.Error(errRecover, "[OpenSergo SDK] error when receive config-data.")
-			scObserver.openSergoClient.subscribeConfigStream = nil
-			scObserver.openSergoClient.status.Store(interrupted)
-			scObserver.receiveGoroutineOpened = groupcache.AtomicInt(0)
+			scObserver.openSergoClient.subscribeConfigStreamPtr.Store(&subscribeConfigStream{})
+			scObserver.openSergoClient.subscribeConfigStreamStatus.Store(interrupted)
+			logging.Error(errRecover, "[OpenSergo SDK] interrupted gRpc Stream (SubscribeConfigStream) because of panic occurring when receive data from opensergo-control-plane.")
+			resp = nil
+			err = errRecover
 		}
 	}()
 
-	scObserver.receiveGoroutineOpened = groupcache.AtomicInt(1)
 	var errorLocal error
-	if scObserver.openSergoClient.subscribeConfigStream == nil {
-		errorLocal = errors.New("can not doReceive(), grpc Stream subscribeConfigStream is nil")
-	}
-	subscribeResponse, err := scObserver.openSergoClient.subscribeConfigStream.Recv()
+	subscribeResponse, err := scObserver.openSergoClient.subscribeConfigStreamPtr.Load().(*subscribeConfigStream).stream.Recv()
 	// TODO add handles for different errors from grpc response.
 	if err != nil {
 		errorLocal = err
 	}
+
 	if errorLocal != nil {
 		logging.Error(errorLocal, "error when receive config-data.")
-		scObserver.openSergoClient.subscribeConfigStream = nil
-		scObserver.openSergoClient.status.Store(interrupted)
-		scObserver.receiveGoroutineOpened = groupcache.AtomicInt(0)
-		logging.Warn("[OpenSergo SDK] end observeReceive()")
-		return
+		scObserver.openSergoClient.subscribeConfigStreamPtr.Store(&subscribeConfigStream{})
+		scObserver.openSergoClient.subscribeConfigStreamStatus.Store(interrupted)
+		logging.Warn("[OpenSergo SDK] interrupted gRpc Stream (SubscribeConfigStream) because of error occurring when receive data from opensergo-control-plane.")
+		return nil, errorLocal
 	}
 
-	scObserver.subscribeResponseChan <- *subscribeResponse
-
-	scObserver.observeReceive()
+	return subscribeResponse, nil
 }
 
 // doHandle handle the received messages from opensergo-control-plane.
 //
-// Contains a recursive invoke.
 // Handle the subscribeResponse from the subscribeResponseChan channel in SubscribeConfigStreamObserver
 func (scObserver *SubscribeConfigStreamObserver) doHandle() {
-	scObserver.handleGoroutineOpened = groupcache.AtomicInt(1)
-
-	subscribeResponse := <-scObserver.subscribeResponseChan
-	scObserver.handleReceive(subscribeResponse)
-
-	scObserver.doHandle()
+	for {
+		if scObserver.openSergoClient.subscribeConfigStreamPtr.Load().(*subscribeConfigStream).stream != nil {
+			select {
+			case subscribeResponse := <-scObserver.subscribeResponseChan:
+				scObserver.handleReceive(subscribeResponse)
+				break
+			}
+		}
+	}
 }
 
 // handleReceive handle the received response of SubscribeConfig() from opensergo-control-plane.
-func (scObserver *SubscribeConfigStreamObserver) handleReceive(subscribeResponse transportPb.SubscribeResponse) {
+func (scObserver *SubscribeConfigStreamObserver) handleReceive(subscribeResponse *transportPb.SubscribeResponse) {
 
 	ack := subscribeResponse.GetAck()
 	// response of client-send
@@ -133,13 +141,15 @@ func (scObserver *SubscribeConfigStreamObserver) handleReceive(subscribeResponse
 		if r := recover(); r != nil {
 			errRecover := errors.Errorf("%+v", r)
 			logging.Error(errRecover, fmt.Sprintf("[OpenSergo SDK] [subscribeResponseId:%v] panic occurred when invoking doHandleReceive() for subscribe.", subscribeResponse.ResponseId))
-			if scObserver.openSergoClient.status.Load() == started {
+			if scObserver.openSergoClient.subscribeConfigStreamStatus.Load() == started {
 				subscribeRequest := &transportPb.SubscribeRequest{
 					Status:      &transportPb.Status{Code: transport.CODE_ERROR_UNKNOWN},
 					ResponseAck: transport.FLAG_NACK,
 					RequestId:   subscribeResponse.ResponseId,
 				}
-				scObserver.openSergoClient.subscribeConfigStream.Send(subscribeRequest)
+				if err := scObserver.openSergoClient.subscribeConfigStreamPtr.Load().(*subscribeConfigStream).stream.Send(subscribeRequest); err != nil {
+					logging.Error(err, "error occurred when send NACK-request for SubscribeConfig")
+				}
 			}
 		}
 	}()
@@ -147,10 +157,9 @@ func (scObserver *SubscribeConfigStreamObserver) handleReceive(subscribeResponse
 	if err := scObserver.doHandleReceive(subscribeResponse); err != nil {
 		logging.Error(err, "[OpenSergo SDK] err occurred when invoke doHandleReceive().")
 	}
-
 }
 
-func (scObserver *SubscribeConfigStreamObserver) doHandleReceive(subscribeResponse transportPb.SubscribeResponse) error {
+func (scObserver *SubscribeConfigStreamObserver) doHandleReceive(subscribeResponse *transportPb.SubscribeResponse) error {
 	kindName := subscribeResponse.GetKind()
 	kindMetadata := configkind.GetConfigKindMetadataRegistry().GetKindMetadataByName(kindName)
 	if (kindMetadata == configkind.ConfigKindMetadata{}) {
@@ -160,7 +169,7 @@ func (scObserver *SubscribeConfigStreamObserver) doHandleReceive(subscribeRespon
 
 	subscribeKey := subscribe.NewSubscribeKey(subscribeResponse.GetNamespace(), subscribeResponse.GetApp(), kindMetadata.GetConfigKind())
 	dataWithVersion := subscribeResponse.GetDataWithVersion()
-	subscribeDataNotifyResult := scObserver.onSubscribeDataNotify(*subscribeKey, *dataWithVersion)
+	subscribeDataNotifyResult := scObserver.onSubscribeDataNotify(*subscribeKey, dataWithVersion)
 
 	code := subscribeDataNotifyResult.Code
 
@@ -190,16 +199,19 @@ func (scObserver *SubscribeConfigStreamObserver) doHandleReceive(subscribeRespon
 		ResponseAck: transport.FLAG_ACK,
 		RequestId:   subscribeResponse.ResponseId,
 	}
-	scObserver.openSergoClient.subscribeConfigStream.Send(subscribeRequest)
+	if err := scObserver.openSergoClient.subscribeConfigStreamPtr.Load().(*subscribeConfigStream).stream.Send(subscribeRequest); err != nil {
+		logging.Error(err, "error occurred when send ACK-request for SubscribeConfig")
+		return err
+	}
 	return nil
 }
 
 // onSubscribeDataNotify to notify all the Subscriber matched the SubscribeKey to update data
-func (scObserver *SubscribeConfigStreamObserver) onSubscribeDataNotify(subscribeKey subscribe.SubscribeKey, dataWithVersion transportPb.DataWithVersion) *subscribe.SubscribeDataNotifyResult {
+func (scObserver *SubscribeConfigStreamObserver) onSubscribeDataNotify(subscribeKey subscribe.SubscribeKey, dataWithVersion *transportPb.DataWithVersion) *subscribe.SubscribeDataNotifyResult {
 	receivedVersion := dataWithVersion.GetVersion()
 	subscribeDataCache := scObserver.openSergoClient.subscribeDataCache
 	cachedData := subscribeDataCache.GetSubscribedData(subscribeKey)
-	if (cachedData != subscribe.SubscribedData{}) && cachedData.GetVersion() > receivedVersion {
+	if (cachedData != nil) && cachedData.GetVersion() > receivedVersion {
 		// The upcoming data is out-dated, so we'll not resolve the push request.
 		return &subscribe.SubscribeDataNotifyResult{
 			Code: transport.CODE_ERROR_VERSION_OUTDATED,
@@ -251,7 +263,9 @@ func decodeSubscribeData(kindName string, dataSlice []*anypb.Any) ([]protoreflec
 	var decodeDataSlice []protoreflect.ProtoMessage
 	protoMessage := configKindMetadata.GetKindPbMessageType().New().Interface()
 	for _, data := range dataSlice {
-		anypb.UnmarshalTo(data, protoMessage, proto.UnmarshalOptions{})
+		if err := anypb.UnmarshalTo(data, protoMessage, proto.UnmarshalOptions{}); err != nil {
+			return nil, err
+		}
 		decodeDataSlice = append(decodeDataSlice, protoMessage)
 	}
 
