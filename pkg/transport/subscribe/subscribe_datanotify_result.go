@@ -28,7 +28,7 @@ type SubscribeDataNotifyResult struct {
 
 func WithSuccessNotifyResult(decodedData []protoreflect.ProtoMessage) *SubscribeDataNotifyResult {
 	return &SubscribeDataNotifyResult{
-		Code:        transport.CODE_SUCCESS,
+		Code:        transport.CodeSuccess,
 		DecodedData: decodedData,
 	}
 }

@@ -15,9 +15,10 @@
 package main
 
 import (
-	"github.com/opensergo/opensergo-go/pkg/common/logging"
 	"log"
 	"os"
+
+	"github.com/opensergo/opensergo-go/pkg/common/logging"
 )
 
 type Logger interface {

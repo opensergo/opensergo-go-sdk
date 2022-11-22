@@ -16,6 +16,8 @@ package client
 
 import (
 	"fmt"
+	"reflect"
+
 	"github.com/opensergo/opensergo-go/pkg/common/logging"
 	"github.com/opensergo/opensergo-go/pkg/configkind"
 	transportPb "github.com/opensergo/opensergo-go/pkg/proto/transport/v1"
@@ -25,7 +27,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/anypb"
-	"reflect"
 )
 
 // SubscribeConfigStreamObserver is a struct as an observer role to listen the response of SubscribeConfig() from opensergo-control-plane.
@@ -126,11 +127,11 @@ func (scObserver *SubscribeConfigStreamObserver) handleReceive(subscribeResponse
 	// response of client-send
 	if ack != "" {
 		code := subscribeResponse.GetStatus().GetCode()
-		if transport.CODE_SUCCESS == code {
+		if transport.CodeSuccess == code {
 			return
 		}
 
-		if code >= transport.CODE_ERROR_UNKNOWN && code < transport.CODE_ERROR_UPPER_BOUND {
+		if code >= transport.CodeErrorUnknown && code < transport.CodeErrorUpperBound {
 			// TODO log info code out of bound
 			return
 		}
@@ -143,8 +144,8 @@ func (scObserver *SubscribeConfigStreamObserver) handleReceive(subscribeResponse
 			logging.Error(errRecover, fmt.Sprintf("[OpenSergo SDK] [subscribeResponseId:%v] panic occurred when invoking doHandleReceive() for subscribe.", subscribeResponse.ResponseId))
 			if scObserver.openSergoClient.subscribeConfigStreamStatus.Load() == started {
 				subscribeRequest := &transportPb.SubscribeRequest{
-					Status:      &transportPb.Status{Code: transport.CODE_ERROR_UNKNOWN},
-					ResponseAck: transport.FLAG_NACK,
+					Status:      &transportPb.Status{Code: transport.CodeErrorUnknown},
+					ResponseAck: transport.FlagNack,
 					RequestId:   subscribeResponse.ResponseId,
 				}
 				if err := scObserver.openSergoClient.subscribeConfigStreamPtr.Load().(*subscribeConfigStream).stream.Send(subscribeRequest); err != nil {
@@ -176,19 +177,19 @@ func (scObserver *SubscribeConfigStreamObserver) doHandleReceive(subscribeRespon
 	// TODO: handle partial-success (i.e. the data has been updated to cache, but error occurred in subscribers)
 	var status *transportPb.Status
 	switch code {
-	case transport.CODE_SUCCESS:
-		status = &transportPb.Status{Code: transport.CODE_SUCCESS}
+	case transport.CodeSuccess:
+		status = &transportPb.Status{Code: transport.CodeSuccess}
 		break
-	case transport.CODE_ERROR_SUBSCRIBE_HANDLER_ERROR:
+	case transport.CodeErrorSubscribeHandlerError:
 		var message string
 		for _, notifyError := range subscribeDataNotifyResult.NotifyErrors {
 			message = notifyError.Error() + "|"
 		}
 
-		status = &transportPb.Status{Message: message, Code: transport.CODE_ERROR_SUBSCRIBE_HANDLER_ERROR}
+		status = &transportPb.Status{Message: message, Code: transport.CodeErrorSubscribeHandlerError}
 		break
-	case transport.CODE_ERROR_VERSION_OUTDATED:
-		status = &transportPb.Status{Code: transport.CODE_ERROR_VERSION_OUTDATED}
+	case transport.CodeErrorVersionOutdated:
+		status = &transportPb.Status{Code: transport.CodeErrorVersionOutdated}
 		break
 	default:
 		status = &transportPb.Status{Code: subscribeDataNotifyResult.Code}
@@ -196,7 +197,7 @@ func (scObserver *SubscribeConfigStreamObserver) doHandleReceive(subscribeRespon
 
 	subscribeRequest := &transportPb.SubscribeRequest{
 		Status:      status,
-		ResponseAck: transport.FLAG_ACK,
+		ResponseAck: transport.FlagAck,
 		RequestId:   subscribeResponse.ResponseId,
 	}
 	if err := scObserver.openSergoClient.subscribeConfigStreamPtr.Load().(*subscribeConfigStream).stream.Send(subscribeRequest); err != nil {
@@ -211,17 +212,17 @@ func (scObserver *SubscribeConfigStreamObserver) onSubscribeDataNotify(subscribe
 	receivedVersion := dataWithVersion.GetVersion()
 	subscribeDataCache := scObserver.openSergoClient.subscribeDataCache
 	cachedData := subscribeDataCache.GetSubscribedData(subscribeKey)
-	if (cachedData != nil) && cachedData.GetVersion() > receivedVersion {
+	if (cachedData != nil) && cachedData.Version() > receivedVersion {
 		// The upcoming data is out-dated, so we'll not resolve the push request.
 		return &subscribe.SubscribeDataNotifyResult{
-			Code: transport.CODE_ERROR_VERSION_OUTDATED,
+			Code: transport.CodeErrorVersionOutdated,
 		}
 	}
 
-	decodeData, err := decodeSubscribeData(subscribeKey.GetKind().GetName(), dataWithVersion.Data)
+	decodeData, err := decodeSubscribeData(subscribeKey.Kind().GetName(), dataWithVersion.Data)
 	if err != nil {
 		return &subscribe.SubscribeDataNotifyResult{
-			Code:         transport.CODE_ERROR_SUBSCRIBE_HANDLER_ERROR,
+			Code:         transport.CodeErrorSubscribeHandlerError,
 			DecodedData:  decodeData,
 			NotifyErrors: []error{err},
 		}
@@ -245,7 +246,7 @@ func (scObserver *SubscribeConfigStreamObserver) onSubscribeDataNotify(subscribe
 		return subscribe.WithSuccessNotifyResult(decodeData)
 	} else {
 		return &subscribe.SubscribeDataNotifyResult{
-			Code:         transport.CODE_ERROR_SUBSCRIBE_HANDLER_ERROR,
+			Code:         transport.CodeErrorSubscribeHandlerError,
 			DecodedData:  decodeData,
 			NotifyErrors: errorSlice,
 		}

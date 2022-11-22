@@ -15,13 +15,13 @@
 package transport
 
 const (
-	CODE_SUCCESS                       int32 = 1
-	CODE_ERROR_UNKNOWN                 int32 = 4000
-	CODE_ERROR_SUBSCRIBE_HANDLER_ERROR int32 = 4007
-	CODE_ERROR_VERSION_OUTDATED        int32 = 4010
+	CodeSuccess                    int32 = 1
+	CodeErrorUnknown               int32 = 4000
+	CodeErrorSubscribeHandlerError int32 = 4007
+	CodeErrorVersionOutdated       int32 = 4010
 
-	CODE_ERROR_UPPER_BOUND int32 = 4100
+	CodeErrorUpperBound int32 = 4100
 
-	FLAG_ACK  string = "ACK"
-	FLAG_NACK string = "NACK"
+	FlagAck  string = "ACK"
+	FlagNack string = "NACK"
 )

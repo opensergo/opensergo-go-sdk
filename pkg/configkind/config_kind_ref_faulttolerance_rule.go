@@ -14,9 +14,7 @@
 
 package configkind
 
-import (
-	faulttolerancePb "github.com/opensergo/opensergo-go/pkg/proto/fault_tolerance/v1"
-)
+import faulttolerancePb "github.com/opensergo/opensergo-go/pkg/proto/fault_tolerance/v1"
 
 // ConfigKindRefFaultToleranceRule  type of ConfigKind
 type ConfigKindRefFaultToleranceRule struct {

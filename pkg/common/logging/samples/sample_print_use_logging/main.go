@@ -15,8 +15,9 @@
 package main
 
 import (
+	"errors"
+
 	"github.com/opensergo/opensergo-go/pkg/common/logging"
-	"github.com/pkg/errors"
 )
 
 // when application has use logging-component Self-contained

@@ -28,10 +28,10 @@ func NewSubscribedData(version int64, data interface{}) *SubscribedData {
 	}
 }
 
-func (subscribedData SubscribedData) GetVersion() int64 {
+func (subscribedData SubscribedData) Version() int64 {
 	return subscribedData.version
 }
 
-func (subscribedData SubscribedData) GetData() interface{} {
+func (subscribedData SubscribedData) Data() interface{} {
 	return subscribedData.data
 }

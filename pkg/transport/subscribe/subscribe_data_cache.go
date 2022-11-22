@@ -15,8 +15,9 @@
 package subscribe
 
 import (
-	"google.golang.org/protobuf/reflect/protoreflect"
 	"sync"
+
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // SubscribeDataCache is a local-cache which cached all the config-data subscribed from opensergo-control-plane.

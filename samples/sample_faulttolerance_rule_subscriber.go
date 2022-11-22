@@ -16,6 +16,7 @@ package samples
 
 import (
 	"encoding/json"
+
 	"github.com/opensergo/opensergo-go/pkg/common/logging"
 	"github.com/opensergo/opensergo-go/pkg/transport/subscribe"
 	"google.golang.org/protobuf/reflect/protoreflect"

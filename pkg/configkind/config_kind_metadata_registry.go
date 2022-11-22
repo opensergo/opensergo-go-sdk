@@ -15,8 +15,9 @@
 package configkind
 
 import (
-	"google.golang.org/protobuf/reflect/protoreflect"
 	"sync"
+
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // ConfigKindMetadataRegistry is a local cache, witch stores all the ConfigKindMetadata supported by OpenSergo.

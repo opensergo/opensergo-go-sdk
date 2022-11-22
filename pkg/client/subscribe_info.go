@@ -15,8 +15,9 @@
 package client
 
 import (
-	"github.com/opensergo/opensergo-go/pkg/transport/subscribe"
 	"reflect"
+
+	"github.com/opensergo/opensergo-go/pkg/transport/subscribe"
 )
 
 type SubscribeInfo struct {

@@ -19,9 +19,9 @@ import (
 	"sync"
 )
 
-// SubscriberRegistry is a local cache, witch stores all the Subscriber that we .
+// SubscriberRegistry is a local cache, which stores all the Subscriber.
 type SubscriberRegistry struct {
-	// map[SubscribeKey] []*Subscriber
+	// map[SubscribeKey] []subscribe.Subscriber
 	registry sync.Map
 }
 

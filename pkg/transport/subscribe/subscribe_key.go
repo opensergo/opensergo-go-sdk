@@ -14,9 +14,7 @@
 
 package subscribe
 
-import (
-	"github.com/opensergo/opensergo-go/pkg/configkind"
-)
+import "github.com/opensergo/opensergo-go/pkg/configkind"
 
 // SubscribeKey is the unique identification for SubscribeData or Subscriber or for
 type SubscribeKey struct {
@@ -34,17 +32,17 @@ func NewSubscribeKey(namespace string, app string, configKind configkind.ConfigK
 	}
 }
 
-// GetNamespace returns the namespace of SubscribeKey
-func (subscribeKey SubscribeKey) GetNamespace() string {
+// Namespace returns the namespace of SubscribeKey
+func (subscribeKey SubscribeKey) Namespace() string {
 	return subscribeKey.namespace
 }
 
-// GetApp returns the app of SubscribeKey
-func (subscribeKey SubscribeKey) GetApp() string {
+// App returns the app of SubscribeKey
+func (subscribeKey SubscribeKey) App() string {
 	return subscribeKey.app
 }
 
-// GetKind returns the kind of SubscribeKey
-func (subscribeKey SubscribeKey) GetKind() configkind.ConfigKind {
+// Kind returns the kind of SubscribeKey
+func (subscribeKey SubscribeKey) Kind() configkind.ConfigKind {
 	return subscribeKey.kind
 }

@@ -15,16 +15,17 @@
 package client
 
 import (
+	"context"
+	"strconv"
+	"sync/atomic"
+	"time"
+
 	"github.com/golang/groupcache"
 	"github.com/opensergo/opensergo-go/pkg/common/logging"
 	transportPb "github.com/opensergo/opensergo-go/pkg/proto/transport/v1"
 	"github.com/opensergo/opensergo-go/pkg/transport/subscribe"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"strconv"
-	"sync/atomic"
-	"time"
 )
 
 // OpenSergoClient is the client to communication with opensergo-control-plane.
@@ -92,9 +93,7 @@ func (openSergoClient *OpenSergoClient) keepAlive() {
 		status := openSergoClient.subscribeConfigStreamStatus.Load().(OpensergoClientStreamStatus)
 		if status == interrupted {
 			logging.Info("[OpenSergo SDK] try to restart openSergoClient...")
-			if err := openSergoClient.Start(); err != nil {
-				// nothing to do because error has print in Start()
-			}
+			_ = openSergoClient.Start() // nothing to do because error has print in Start()
 		}
 		time.Sleep(time.Duration(10) * time.Second)
 	}
@@ -110,7 +109,7 @@ func (openSergoClient *OpenSergoClient) Start() error {
 
 	// keepalive OpensergoClient
 	if openSergoClient.subscribeConfigStreamStatus.Load().(OpensergoClientStreamStatus) == initial {
-		logging.Info("[OpenSergo SDK] open keepalive() goroutine to keep OpensergoClient alive")
+		logging.Info("[OpenSergo SDK] open keepalive() goroutine to keep OpenSergoClient alive")
 		go openSergoClient.keepAlive()
 	}
 
@@ -147,15 +146,15 @@ func (openSergoClient *OpenSergoClient) Start() error {
 // and return the result of subscribe config-data from opensergo-control-plane.
 func (openSergoClient *OpenSergoClient) SubscribeConfig(subscribeKey subscribe.SubscribeKey) bool {
 	if openSergoClient.subscribeConfigStreamPtr.Load().(*subscribeConfigStream).stream == nil {
-		logging.Warn("[OpenSergo SDK] gRpc Stream (SubscribeConfigStream) in openSergoClient is nil! can't subscribe config-data. waiting for keepalive goroutine to restart...")
+		logging.Warn("[OpenSergo SDK] gRpc Stream (SubscribeConfigStream) in openSergoClient is nil! can't subscribe config-data. waiting for keepalive goroutine to restart...", "namespace", subscribeKey.Namespace(), "app", subscribeKey.App(), "kinds", subscribeKey.Kind().GetName())
 		openSergoClient.subscribeConfigStreamStatus.Store(interrupted)
 		return false
 	}
 
 	subscribeRequestTarget := transportPb.SubscribeRequestTarget{
-		Namespace: subscribeKey.GetNamespace(),
-		App:       subscribeKey.GetApp(),
-		Kinds:     []string{subscribeKey.GetKind().GetName()},
+		Namespace: subscribeKey.Namespace(),
+		App:       subscribeKey.App(),
+		Kinds:     []string{subscribeKey.Kind().GetName()},
 	}
 
 	subscribeRequest := &transportPb.SubscribeRequest{
@@ -165,9 +164,11 @@ func (openSergoClient *OpenSergoClient) SubscribeConfig(subscribeKey subscribe.S
 
 	err := openSergoClient.subscribeConfigStreamPtr.Load().(*subscribeConfigStream).stream.Send(subscribeRequest)
 	if err != nil {
-		logging.Error(err, "[OpenSergo SDK] something occured when sending subscribe request.")
+		logging.Error(err, "[OpenSergo SDK] something occurred when sending subscribe request.", "namespace", subscribeKey.Namespace(), "app", subscribeKey.App(), "kinds", subscribeKey.Kind().GetName())
 		return false
 	}
+
+	logging.Info("[OpenSergo SDK] subscribe success.", "namespace", subscribeKey.Namespace(), "app", subscribeKey.App(), "kinds", subscribeKey.Kind().GetName())
 
 	return true
 }
@@ -178,16 +179,16 @@ func (openSergoClient *OpenSergoClient) SubscribeConfig(subscribeKey subscribe.S
 func (openSergoClient *OpenSergoClient) UnsubscribeConfig(subscribeKey subscribe.SubscribeKey) bool {
 
 	if openSergoClient.subscribeConfigStreamPtr.Load().(*subscribeConfigStream).stream == nil {
-		logging.Warn("[OpenSergo SDK] gRpc Stream (SubscribeConfigStream) in openSergoClient is nil! can't unsubscribe config-data. waiting for keepalive goroutine to restart...")
+		logging.Warn("[OpenSergo SDK] gRpc Stream (SubscribeConfigStream) in openSergoClient is nil! can't unsubscribe config-data. waiting for keepalive goroutine to restart...", "namespace", subscribeKey.Namespace(), "app", subscribeKey.App(), "kinds", subscribeKey.Kind().GetName())
 		openSergoClient.subscribeConfigStreamStatus.Store(interrupted)
 		return false
 	}
 
 	subscribeRequestTarget := transportPb.SubscribeRequestTarget{
-		Namespace: subscribeKey.GetNamespace(),
-		App:       subscribeKey.GetApp(),
+		Namespace: subscribeKey.Namespace(),
+		App:       subscribeKey.App(),
 	}
-	subscribeRequestTarget.Kinds = append(subscribeRequestTarget.Kinds, subscribeKey.GetKind().GetName())
+	subscribeRequestTarget.Kinds = append(subscribeRequestTarget.Kinds, subscribeKey.Kind().GetName())
 
 	subscribeRequest := &transportPb.SubscribeRequest{
 		Target: &subscribeRequestTarget,
@@ -197,9 +198,11 @@ func (openSergoClient *OpenSergoClient) UnsubscribeConfig(subscribeKey subscribe
 	// Send SubscribeRequest (unsubscribe command)
 	err := openSergoClient.subscribeConfigStreamPtr.Load().(*subscribeConfigStream).stream.Send(subscribeRequest)
 	if err != nil {
-		logging.Error(err, "[OpenSergo SDK] something occured when sending unsubscribe request.")
+		logging.Error(err, "[OpenSergo SDK] something occurred when sending unsubscribe request.", "namespace", subscribeKey.Namespace(), "app", subscribeKey.App(), "kinds", subscribeKey.Kind().GetName())
 		return false
 	}
+
+	logging.Info("[OpenSergo SDK] subscribe unsuccess.", "namespace", subscribeKey.Namespace(), "app", subscribeKey.App(), "kinds", subscribeKey.Kind().GetName())
 
 	// Remove subscribers of the subscribe target.
 	openSergoClient.subscriberRegistry.RemoveSubscribers(subscribeKey)

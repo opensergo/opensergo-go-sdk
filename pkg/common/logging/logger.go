@@ -15,8 +15,9 @@
 package logging
 
 import (
-	"github.com/pkg/errors"
 	"reflect"
+
+	"github.com/pkg/errors"
 )
 
 // Logger the common interface for logging.

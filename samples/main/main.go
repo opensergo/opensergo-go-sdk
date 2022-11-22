@@ -15,11 +15,12 @@
 package main
 
 import (
+	"time"
+
 	"github.com/opensergo/opensergo-go/pkg/client"
 	"github.com/opensergo/opensergo-go/pkg/configkind"
 	"github.com/opensergo/opensergo-go/pkg/transport/subscribe"
 	"github.com/opensergo/opensergo-go/samples"
-	"time"
 )
 
 // main

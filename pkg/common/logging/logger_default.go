@@ -15,10 +15,11 @@
 package logging
 
 import (
-	"github.com/pkg/errors"
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/pkg/errors"
 )
 
 // Level represents the level of logging.
