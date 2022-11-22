@@ -44,7 +44,7 @@ var (
 )
 
 const (
-	DefaultLogCallerDepth = 8
+	DefaultLogCallerDepth = 9
 	DefaultErrorWithStack = false
 )
 

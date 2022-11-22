@@ -56,12 +56,8 @@ func main() {
 	openSergoClient.Start()
 
 	//registry after OpenSergoClient started
-	//faultToleranceSubscribeInfo.AppendSubscriber(new(subscribe.DefaultSubscriber))
+	//faultToleranceSubscribeInfo.AppendSubscriber(new(subscribe.SampleLogSubscriber))
 	//openSergoClient.RegisterSubscribeInfo(faultToleranceSubscribeInfo)
-
-	// registry after OpenSergoClient started
-	//rateLimitSubscribeInfo.AppendSubscriber(new(subscribe.DefaultSubscriber))
-	//openSergoClient.RegisterSubscribeInfo(rateLimitSubscribeInfo)
 
 	// unsubscribeConfig
 	go unsubscribeConfig(openSergoClient, *rateLimitSubscribeKey)

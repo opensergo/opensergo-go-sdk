@@ -14,13 +14,9 @@
 
 package subscribe
 
-import (
-	"google.golang.org/protobuf/reflect/protoreflect"
-)
-
 // Subscriber is an interface defined functions for all sub-struct.
 type Subscriber interface {
 
 	// OnSubscribeDataUpdate is a function that will be invoked by SubscribeData changed.
-	OnSubscribeDataUpdate(subscribeKey SubscribeKey, data []protoreflect.ProtoMessage) (bool, error)
+	OnSubscribeDataUpdate(subscribeKey SubscribeKey, data interface{}) (bool, error)
 }

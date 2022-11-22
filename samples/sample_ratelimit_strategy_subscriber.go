@@ -24,9 +24,10 @@ import (
 type SampleRateLimitStrategySubscriber struct {
 }
 
-func (sampleRateLimitStrategySubscriber SampleRateLimitStrategySubscriber) OnSubscribeDataUpdate(subscribeKey subscribe.SubscribeKey, dataSlice []protoreflect.ProtoMessage) (bool, error) {
+func (sampleRateLimitStrategySubscriber SampleRateLimitStrategySubscriber) OnSubscribeDataUpdate(subscribeKey subscribe.SubscribeKey, dataSlice interface{}) (bool, error) {
 	// TODO  implement the custom-logic OnSubscribeDataUpdate
-	jsonBytes, _ := json.Marshal(dataSlice)
+	messages := dataSlice.([]protoreflect.ProtoMessage)
+	jsonBytes, _ := json.Marshal(messages)
 	logging.Info(string(jsonBytes))
 	return true, nil
 }

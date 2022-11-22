@@ -12,20 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package subscribe
+package samples
 
 import (
 	"encoding/json"
 	"github.com/opensergo/opensergo-go/pkg/common/logging"
+	"github.com/opensergo/opensergo-go/pkg/transport/subscribe"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-type DefaultSubscriber struct {
+type SampleLogSubscriber struct {
 }
 
-func (defaultSubscriber DefaultSubscriber) OnSubscribeDataUpdate(subscribeKey SubscribeKey, dataSlice []protoreflect.ProtoMessage) (bool, error) {
+func (sampleLogSubscriber SampleLogSubscriber) OnSubscribeDataUpdate(subscribeKey subscribe.SubscribeKey, dataSlice interface{}) (bool, error) {
 	// TODO  implement the custom-logic OnSubscribeDataUpdate
-	jsonBytes, _ := json.Marshal(dataSlice)
-	logging.Info("[OpenSergo SDK] receive data in DefaultSubscriber.", "data", string(jsonBytes))
+	messages := dataSlice.([]protoreflect.ProtoMessage)
+	jsonBytes, _ := json.Marshal(messages)
+	logging.Info("[OpenSergo SDK] receive data in SampleLogSubscriber.", "data", string(jsonBytes))
 	return true, nil
 }
