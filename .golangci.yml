@@ -2,6 +2,10 @@
 run:
   # vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
   skip-dirs-use-default: true
+  skip-dirs:
+    - pkg/proto
+    - samples
+    - pkg/common/logging/samples
   skip-files:
     - ".*\\.pb\\.go$"
 # output configuration options
