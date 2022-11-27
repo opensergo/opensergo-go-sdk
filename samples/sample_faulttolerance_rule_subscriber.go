@@ -25,9 +25,9 @@ import (
 type SampleFaultToleranceRuleSubscriber struct {
 }
 
-func (sampleFaultToleranceRuleSubscriber SampleFaultToleranceRuleSubscriber) OnSubscribeDataUpdate(subscribeKey subscribe.SubscribeKey, dataSlice interface{}) (bool, error) {
+func (sampleFaultToleranceRuleSubscriber SampleFaultToleranceRuleSubscriber) OnSubscribeDataUpdate(subscribeKey subscribe.SubscribeKey, data interface{}) (bool, error) {
 	// TODO  implement the custom-logic OnSubscribeDataUpdate
-	messages := dataSlice.([]protoreflect.ProtoMessage)
+	messages := data.([]protoreflect.ProtoMessage)
 	jsonBytes, _ := json.Marshal(messages)
 	logging.Info(string(jsonBytes))
 	return true, nil
