@@ -15,6 +15,7 @@
 package main
 
 import (
+	"github.com/opensergo/opensergo-go/pkg/common/logging"
 	"time"
 
 	"github.com/opensergo/opensergo-go/pkg/client"
@@ -28,7 +29,7 @@ import (
 // a simple example.
 func main() {
 	// add console logger (optional)
-	//logging.NewConsoleLogger(logging.InfoLevel, logging.SeparateFormat, true)
+	logging.NewConsoleLogger(logging.InfoLevel, logging.SeparateFormat, true)
 	// add file logger (optional)
 	//logging.NewFileLogger("/Users/J/logs/opensergo/opensergo-universal-transport-service.log", logging.InfoLevel, logging.JsonFormat, true)
 
@@ -46,19 +47,15 @@ func main() {
 	// 4. registry
 	openSergoClient.RegisterSubscribeInfo(faultToleranceSubscribeInfo)
 
+	// start OpensergoClient
+	openSergoClient.Start()
+
 	// registry SubscribeInfo of RateLimitStrategy
 	rateLimitSubscribeKey := subscribe.NewSubscribeKey("default", "foo-app", configkind.ConfigKindRefRateLimitStrategy{})
 	sampleRateLimitStrategySubscriber := new(samples.SampleRateLimitStrategySubscriber)
 	rateLimitSubscribeInfo := client.NewSubscribeInfo(rateLimitSubscribeKey)
 	rateLimitSubscribeInfo.AppendSubscriber(sampleRateLimitStrategySubscriber)
 	openSergoClient.RegisterSubscribeInfo(rateLimitSubscribeInfo)
-
-	// start OpensergoClient
-	openSergoClient.Start()
-
-	//registry after OpenSergoClient started
-	//faultToleranceSubscribeInfo.AppendSubscriber(new(subscribe.SampleLogSubscriber))
-	//openSergoClient.RegisterSubscribeInfo(faultToleranceSubscribeInfo)
 
 	// unsubscribeConfig
 	go unsubscribeConfig(openSergoClient, *rateLimitSubscribeKey)
