@@ -17,6 +17,7 @@ package subscribe
 import (
 	"sync"
 
+	"github.com/opensergo/opensergo-go/pkg/model"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -27,13 +28,13 @@ type SubscribeDataCache struct {
 }
 
 // UpdateSubscribedData to update the config-data by subscribeKey
-func (subscribeDataCache *SubscribeDataCache) UpdateSubscribedData(subscribeKey SubscribeKey, data []protoreflect.ProtoMessage, version int64) {
+func (subscribeDataCache *SubscribeDataCache) UpdateSubscribedData(subscribeKey model.SubscribeKey, data []protoreflect.ProtoMessage, version int64) {
 	// TODO: guarantee the latest version
 	subscribeDataCache.cache.Store(subscribeKey, NewSubscribedData(version, data))
 }
 
 // GetSubscribedData to get the config-data from cache by subscribeKey
-func (subscribeDataCache *SubscribeDataCache) GetSubscribedData(subscribeKey SubscribeKey) *SubscribedData {
+func (subscribeDataCache *SubscribeDataCache) GetSubscribedData(subscribeKey model.SubscribeKey) *SubscribedData {
 	load, _ := subscribeDataCache.cache.Load(subscribeKey)
 	if load == nil {
 		return nil
