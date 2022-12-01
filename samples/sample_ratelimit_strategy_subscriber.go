@@ -18,17 +18,17 @@ import (
 	"encoding/json"
 
 	"github.com/opensergo/opensergo-go/pkg/common/logging"
-	"github.com/opensergo/opensergo-go/pkg/transport/subscribe"
+	"github.com/opensergo/opensergo-go/pkg/model"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 type SampleRateLimitStrategySubscriber struct {
 }
 
-func (sampleRateLimitStrategySubscriber SampleRateLimitStrategySubscriber) OnSubscribeDataUpdate(subscribeKey subscribe.SubscribeKey, data interface{}) (bool, error) {
-	// TODO  implement the custom-logic OnSubscribeDataUpdate
+func (sampleRateLimitStrategySubscriber SampleRateLimitStrategySubscriber) OnSubscribeDataUpdate(subscribeKey model.SubscribeKey, data interface{}) (bool, error) {
 	messages := data.([]protoreflect.ProtoMessage)
 	jsonBytes, _ := json.Marshal(messages)
+	// Just print received data here.
 	logging.Info(string(jsonBytes))
 	return true, nil
 }

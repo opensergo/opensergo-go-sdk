@@ -16,11 +16,12 @@ package main
 
 import (
 	"github.com/opensergo/opensergo-go/pkg/common/logging"
-	"time"
+	"log"
 
+	"github.com/opensergo/opensergo-go/pkg/api"
 	"github.com/opensergo/opensergo-go/pkg/client"
 	"github.com/opensergo/opensergo-go/pkg/configkind"
-	"github.com/opensergo/opensergo-go/pkg/transport/subscribe"
+	"github.com/opensergo/opensergo-go/pkg/model"
 	"github.com/opensergo/opensergo-go/samples"
 )
 
@@ -28,46 +29,49 @@ import (
 //
 // a simple example.
 func main() {
-	// add console logger (optional)
-	logging.NewConsoleLogger(logging.InfoLevel, logging.SeparateFormat, true)
-	// add file logger (optional)
-	//logging.NewFileLogger("/Users/J/logs/opensergo/opensergo-universal-transport-service.log", logging.InfoLevel, logging.JsonFormat, true)
-
-	// instant OpenSergoClient
-	openSergoClient := client.NewOpenSergoClient("127.0.0.1", 10246)
-
-	// registry SubscribeInfo of FaultToleranceRule
-	// 1. instant SubscribeKey
-	faultToleranceSubscribeKey := subscribe.NewSubscribeKey("default", "foo-app", configkind.ConfigKindRefFaultToleranceRule{})
-	// 2. instant Subscriber
-	sampleFaultToleranceRuleSubscriber := new(samples.SampleFaultToleranceRuleSubscriber)
-	// 3. construct SubscribeInfo
-	faultToleranceSubscribeInfo := client.NewSubscribeInfo(faultToleranceSubscribeKey)
-	faultToleranceSubscribeInfo.AppendSubscriber(sampleFaultToleranceRuleSubscriber)
-	// 4. registry
-	openSergoClient.RegisterSubscribeInfo(faultToleranceSubscribeInfo)
-
-	// start OpensergoClient
-	openSergoClient.Start()
-
-	// registry SubscribeInfo of RateLimitStrategy
-	rateLimitSubscribeKey := subscribe.NewSubscribeKey("default", "foo-app", configkind.ConfigKindRefRateLimitStrategy{})
-	sampleRateLimitStrategySubscriber := new(samples.SampleRateLimitStrategySubscriber)
-	rateLimitSubscribeInfo := client.NewSubscribeInfo(rateLimitSubscribeKey)
-	rateLimitSubscribeInfo.AppendSubscriber(sampleRateLimitStrategySubscriber)
-	openSergoClient.RegisterSubscribeInfo(rateLimitSubscribeInfo)
-
-	// unsubscribeConfig
-	go unsubscribeConfig(openSergoClient, *rateLimitSubscribeKey)
+	err := StartAndSubscribeOpenSergoConfig()
+	if err != nil {
+		// Handle error here.
+		log.Printf("Failed to StartAndSubscribeOpenSergoConfig: %s\n", err.Error())
+	}
 
 	select {}
 }
 
-func unsubscribeConfig(openSergoClient *client.OpenSergoClient, key subscribe.SubscribeKey) {
+func StartAndSubscribeOpenSergoConfig() error {
+	// Set OpenSergo console logger (optional)
+	logging.NewConsoleLogger(logging.InfoLevel, logging.SeparateFormat, true)
+	// Set OpenSergo file logger (optional)
+	// logging.NewFileLogger("./opensergo-universal-transport-service.log", logging.InfoLevel, logging.JsonFormat, true)
 
-	for {
-		time.Sleep(time.Duration(60) * time.Second)
-		openSergoClient.UnsubscribeConfig(key)
+	// Create a OpenSergoClient.
+	openSergoClient, err := client.NewOpenSergoClient("127.0.0.1", 10246)
+	if err != nil {
+		return err
 	}
 
+	// Start OpenSergoClient
+	err = openSergoClient.Start()
+	if err != nil {
+		return err
+	}
+
+	// Create a SubscribeKey for FaultToleranceRule.
+	faultToleranceSubscribeKey := model.NewSubscribeKey("default", "foo-app", configkind.ConfigKindRefFaultToleranceRule{})
+	// Create a Subscriber.
+	sampleFaultToleranceRuleSubscriber := &samples.SampleFaultToleranceRuleSubscriber{}
+	// Subscribe data with the key and subscriber.
+	err = openSergoClient.SubscribeConfig(*faultToleranceSubscribeKey, api.WithSubscriber(sampleFaultToleranceRuleSubscriber))
+	if err != nil {
+		return err
+	}
+
+	// Create a SubscribeKey for RateLimitStrategy.
+	rateLimitSubscribeKey := model.NewSubscribeKey("default", "foo-app", configkind.ConfigKindRefRateLimitStrategy{})
+	// Create another Subscriber.
+	sampleRateLimitStrategySubscriber := &samples.SampleRateLimitStrategySubscriber{}
+	// Subscribe data with the key and subscriber.
+	err = openSergoClient.SubscribeConfig(*rateLimitSubscribeKey, api.WithSubscriber(sampleRateLimitStrategySubscriber))
+
+	return err
 }
