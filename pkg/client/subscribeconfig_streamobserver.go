@@ -20,6 +20,7 @@ import (
 
 	"github.com/opensergo/opensergo-go/pkg/common/logging"
 	"github.com/opensergo/opensergo-go/pkg/configkind"
+	"github.com/opensergo/opensergo-go/pkg/model"
 	transportPb "github.com/opensergo/opensergo-go/pkg/proto/transport/v1"
 	"github.com/opensergo/opensergo-go/pkg/transport"
 	"github.com/opensergo/opensergo-go/pkg/transport/subscribe"
@@ -168,7 +169,7 @@ func (scObserver *SubscribeConfigStreamObserver) doHandleReceive(subscribeRespon
 		return errors.New("[OpenSergo SDK] unrecognized config kind: " + kindName)
 	}
 
-	subscribeKey := subscribe.NewSubscribeKey(subscribeResponse.GetNamespace(), subscribeResponse.GetApp(), kindMetadata.GetConfigKind())
+	subscribeKey := model.NewSubscribeKey(subscribeResponse.GetNamespace(), subscribeResponse.GetApp(), kindMetadata.GetConfigKind())
 	dataWithVersion := subscribeResponse.GetDataWithVersion()
 	subscribeDataNotifyResult := scObserver.onSubscribeDataNotify(*subscribeKey, dataWithVersion)
 
@@ -208,7 +209,7 @@ func (scObserver *SubscribeConfigStreamObserver) doHandleReceive(subscribeRespon
 }
 
 // onSubscribeDataNotify to notify all the Subscriber matched the SubscribeKey to update data
-func (scObserver *SubscribeConfigStreamObserver) onSubscribeDataNotify(subscribeKey subscribe.SubscribeKey, dataWithVersion *transportPb.DataWithVersion) *subscribe.SubscribeDataNotifyResult {
+func (scObserver *SubscribeConfigStreamObserver) onSubscribeDataNotify(subscribeKey model.SubscribeKey, dataWithVersion *transportPb.DataWithVersion) *subscribe.SubscribeDataNotifyResult {
 	receivedVersion := dataWithVersion.GetVersion()
 	subscribeDataCache := scObserver.openSergoClient.subscribeDataCache
 	cachedData := subscribeDataCache.GetSubscribedData(subscribeKey)
