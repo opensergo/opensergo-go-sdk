@@ -14,9 +14,11 @@
 
 package subscribe
 
+import "github.com/opensergo/opensergo-go/pkg/model"
+
 // Subscriber is an interface defined functions for all sub-struct.
 type Subscriber interface {
 
 	// OnSubscribeDataUpdate is a function that will be invoked by SubscribeData changed.
-	OnSubscribeDataUpdate(subscribeKey SubscribeKey, data interface{}) (bool, error)
+	OnSubscribeDataUpdate(subscribeKey model.SubscribeKey, data interface{}) (bool, error)
 }

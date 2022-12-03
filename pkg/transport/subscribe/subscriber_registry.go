@@ -17,40 +17,45 @@ package subscribe
 import (
 	"reflect"
 	"sync"
+
+	"github.com/opensergo/opensergo-go/pkg/model"
 )
 
 // SubscriberRegistry is a local cache, which stores all the Subscriber.
 type SubscriberRegistry struct {
 	// map[SubscribeKey] []subscribe.Subscriber
-	registry sync.Map
+	subscriberMap sync.Map
 }
 
-// RegisterSubscriber registry a Subscriber to local cache
-func (subscriberRegistry *SubscriberRegistry) RegisterSubscriber(subscribeKey SubscribeKey, subscriber Subscriber) {
-	subscribersInRegistry, _ := subscriberRegistry.registry.Load(subscribeKey)
+// RegisterSubscriber subscriberMap a Subscriber to local cache
+func (subscriberRegistry *SubscriberRegistry) RegisterSubscriber(subscribeKey model.SubscribeKey, subscriber Subscriber) {
+	if subscriber == nil {
+		return
+	}
+	subscribersInRegistry, _ := subscriberRegistry.subscriberMap.Load(subscribeKey)
 	if subscribersInRegistry == nil {
-		subscriberRegistry.registry.Store(subscribeKey, []Subscriber{subscriber})
+		subscriberRegistry.subscriberMap.Store(subscribeKey, []Subscriber{subscriber})
 		return
 	}
 
 	for _, subscriberItem := range subscribersInRegistry.([]Subscriber) {
 		if reflect.ValueOf(subscriberItem).Interface() != reflect.ValueOf(subscriber).Interface() {
 			subscribers := append(subscribersInRegistry.([]Subscriber), subscriber)
-			subscriberRegistry.registry.Store(subscribeKey, subscribers)
+			subscriberRegistry.subscriberMap.Store(subscribeKey, subscribers)
 		}
 	}
 }
 
-// RunWithRangeRegistry run func with range SubscriberRegistry, avoid copy sync.Map
-func (subscriberRegistry *SubscriberRegistry) RunWithRangeRegistry(runner func(key, value interface{}) bool) {
-	subscriberRegistry.registry.Range(func(key, value interface{}) bool {
-		return runner(key, value)
+// ForEachSubscribeKey run func with range SubscriberRegistry.
+func (subscriberRegistry *SubscriberRegistry) ForEachSubscribeKey(runner func(key model.SubscribeKey) bool) {
+	subscriberRegistry.subscriberMap.Range(func(key, value interface{}) bool {
+		return runner(key.(model.SubscribeKey))
 	})
 }
 
 // GetSubscribersOf returns a Subscriber by SubscribeKey
-func (subscriberRegistry *SubscriberRegistry) GetSubscribersOf(subscribeKey SubscribeKey) []Subscriber {
-	value, _ := subscriberRegistry.registry.Load(subscribeKey)
+func (subscriberRegistry *SubscriberRegistry) GetSubscribersOf(subscribeKey model.SubscribeKey) []Subscriber {
+	value, _ := subscriberRegistry.subscriberMap.Load(subscribeKey)
 	if value == nil {
 		return nil
 	}
@@ -59,6 +64,6 @@ func (subscriberRegistry *SubscriberRegistry) GetSubscribersOf(subscribeKey Subs
 }
 
 // RemoveSubscribers remove Subscribers by SubscribeKey
-func (subscriberRegistry *SubscriberRegistry) RemoveSubscribers(subscribeKey SubscribeKey) {
-	subscriberRegistry.registry.Delete(subscribeKey)
+func (subscriberRegistry *SubscriberRegistry) RemoveSubscribers(subscribeKey model.SubscribeKey) {
+	subscriberRegistry.subscriberMap.Delete(subscribeKey)
 }

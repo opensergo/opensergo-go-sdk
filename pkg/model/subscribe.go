@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package subscribe
+package model
 
 import "github.com/opensergo/opensergo-go/pkg/configkind"
 
-// SubscribeKey is the unique identification for SubscribeData or Subscriber or for
+// SubscribeKey is the unique identification for a subscription target.
 type SubscribeKey struct {
 	namespace string
 	app       string
