@@ -16,6 +16,7 @@ package logging
 
 import (
 	"reflect"
+	"sync"
 
 	"github.com/pkg/errors"
 )
@@ -66,12 +67,6 @@ type Logger interface {
 	// keys and arbitrary values.
 	Error(err error, msg string, keysAndValues ...interface{})
 }
-
-var (
-	loggerSlice = make([]Logger, 0)
-
-	consoleLogger Logger
-)
 
 // Print logs message no format as what the msg presents.
 func Print(msg string) {
@@ -179,19 +174,26 @@ func ErrorWithCallerDepth(logger Logger, logFormat LogFormat, logCallerDepth int
 	logger.Print(AssembleMsg(logFormat, logCallerDepth, "ERROR", msg, err, errorWithStack, keysAndValues...))
 }
 
-// AppendLoggerSlice add the Logger into loggerSlice
-func AppendLoggerSlice(loggerAppend Logger) {
-	loggerSlice = append(loggerSlice, loggerAppend)
+var (
+	loggers      = make([]Logger, 0)
+	loggersMutex sync.Mutex
+)
+
+// AddLogger add the Logger into loggerSlice
+func AddLogger(loggerAppend Logger) int {
+	loggersMutex.Lock()
+	defer loggersMutex.Unlock()
+
+	loggers = append(loggers, loggerAppend)
+	return len(loggers)
 }
 
-// ClearLoggerSlice clear the Logger into loggerSlice
-func ClearLoggerSlice() {
-	loggerSlice = make([]Logger, 0)
-}
+// ClearLogger clear the loggerSlice
+func ClearLogger() {
+	loggersMutex.Lock()
+	defer loggersMutex.Unlock()
 
-// SetConsoleLogger set the consoleLogger to print int stdout
-func SetConsoleLogger(logger Logger) {
-	consoleLogger = logger
+	loggers = make([]Logger, 0)
 }
 
 // doLog do log
@@ -200,16 +202,13 @@ func SetConsoleLogger(logger Logger) {
 // msg
 // keysAndValues
 func doLog(funcNameFromInterface string, err error, msg string, keysAndValues ...interface{}) {
-	if consoleLogger == nil && len(loggerSlice) == 0 {
-		NewDefaultConsoleLogger(InfoLevel)
+	if len(loggers) == 0 {
+		defaultConsoleLogger := NewDefaultConsoleLogger(InfoLevel)
+		AddLogger(defaultConsoleLogger)
 	}
 
-	if consoleLogger != nil {
-		invokeLogger(consoleLogger, funcNameFromInterface, err, msg, keysAndValues...)
-	}
-
-	if len(loggerSlice) > 0 {
-		for _, logger := range loggerSlice {
+	if len(loggers) > 0 {
+		for _, logger := range loggers {
 			invokeLogger(logger, funcNameFromInterface, err, msg, keysAndValues...)
 		}
 	}

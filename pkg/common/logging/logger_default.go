@@ -138,7 +138,6 @@ func NewFileLogger(filepath string, loggerLevel Level, logFormat LogFormat, erro
 		LoggerFormat:   logFormat,
 		ErrorWithStack: errorWithStack,
 	}
-	AppendLoggerSlice(defaultLogger)
 	return defaultLogger, err
 }
 
@@ -146,7 +145,6 @@ func NewFileLogger(filepath string, loggerLevel Level, logFormat LogFormat, erro
 // And there is only one ConsoleLogger instance in the Global.
 func NewDefaultConsoleLogger(logLevel Level) Logger {
 	defaultLogger := NewConsoleLogger(logLevel, ConsoleLogFormat, DefaultErrorWithStack)
-	SetConsoleLogger(defaultLogger)
 	return defaultLogger
 }
 
@@ -159,6 +157,5 @@ func NewConsoleLogger(logLevel Level, logFormat LogFormat, errorWithStack bool) 
 		LoggerFormat:   logFormat,
 		ErrorWithStack: errorWithStack,
 	}
-	SetConsoleLogger(defaultLogger)
 	return defaultLogger
 }
