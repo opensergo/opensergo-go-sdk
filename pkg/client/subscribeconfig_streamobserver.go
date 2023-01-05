@@ -263,8 +263,8 @@ func decodeSubscribeData(kindName string, dataSlice []*anypb.Any) ([]protoreflec
 		return nil, errors.New("unrecognized config kind: " + kindName)
 	}
 	var decodeDataSlice []protoreflect.ProtoMessage
-	protoMessage := configKindMetadata.GetKindPbMessageType().New().Interface()
 	for _, data := range dataSlice {
+		protoMessage := configKindMetadata.GetKindPbMessageType().New().Interface()
 		if err := anypb.UnmarshalTo(data, protoMessage, proto.UnmarshalOptions{}); err != nil {
 			return nil, err
 		}
