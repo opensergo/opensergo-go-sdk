@@ -15,11 +15,11 @@
 package main
 
 import (
+	"github.com/opensergo/opensergo-go/pkg/client"
 	"github.com/opensergo/opensergo-go/pkg/common/logging"
 	"log"
 
 	"github.com/opensergo/opensergo-go/pkg/api"
-	"github.com/opensergo/opensergo-go/pkg/client"
 	"github.com/opensergo/opensergo-go/pkg/configkind"
 	"github.com/opensergo/opensergo-go/pkg/model"
 	"github.com/opensergo/opensergo-go/samples"
@@ -72,6 +72,16 @@ func StartAndSubscribeOpenSergoConfig() error {
 	sampleRateLimitStrategySubscriber := &samples.SampleRateLimitStrategySubscriber{}
 	// Subscribe data with the key and subscriber.
 	err = openSergoClient.SubscribeConfig(*rateLimitSubscribeKey, api.WithSubscriber(sampleRateLimitStrategySubscriber))
+
+	if err != nil {
+		return err
+	}
+	// Create a SubscribeKey for TrafficRouter
+	trafficRouterSubscribeKey := model.NewSubscribeKey("default", "service-provider", configkind.ConfigKindTrafficRouterStrategy{})
+	// Create another Subscriber
+	sampleTrafficRouterSubscriber := &samples.SampleTrafficRouterSubscriber{}
+	// Subscribe data with the key and subscriber
+	err = openSergoClient.SubscribeConfig(*trafficRouterSubscribeKey, api.WithSubscriber(sampleTrafficRouterSubscriber))
 
 	return err
 }
