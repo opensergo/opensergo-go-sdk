@@ -33,8 +33,10 @@ import (
 
 // OpenSergoClient is the client to communicate with opensergo-control-plane.
 type OpenSergoClient struct {
-	host                   string
-	port                   uint32
+	host          string
+	port          uint32
+	clientOptions *api.ClientOptions
+
 	transportServiceClient transportPb.OpenSergoUniversalTransportServiceClient
 
 	subscribeConfigStreamPtr         atomic.Value // type of value is *client.subscribeConfigStream
@@ -48,7 +50,10 @@ type OpenSergoClient struct {
 }
 
 // NewOpenSergoClient returns an instance of OpenSergoClient, and init some properties.
-func NewOpenSergoClient(host string, port uint32) (*OpenSergoClient, error) {
+func NewOpenSergoClient(host string, port uint32, opts ...api.ClientOption) (*OpenSergoClient, error) {
+	clientOptions := api.NewDefaultClientOptions()
+	clientOptions.ApplyClientOptions(opts...)
+
 	address := host + ":" + strconv.FormatUint(uint64(port), 10)
 	clientConn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -59,6 +64,7 @@ func NewOpenSergoClient(host string, port uint32) (*OpenSergoClient, error) {
 	openSergoClient := &OpenSergoClient{
 		host:                   host,
 		port:                   port,
+		clientOptions:          clientOptions,
 		transportServiceClient: transportServiceClient,
 		subscribeDataCache:     &subscribe.SubscribeDataCache{},
 		subscriberRegistry:     &subscribe.SubscriberRegistry{},
@@ -156,8 +162,8 @@ func (c *OpenSergoClient) SubscribeConfig(subscribeKey model.SubscribeKey, opts 
 	}
 
 	// Register subscribers.
-	if len(options.Subscribers) > 0 {
-		for _, subscriber := range options.Subscribers {
+	if len(options.Subscribers()) > 0 {
+		for _, subscriber := range options.Subscribers() {
 			c.subscriberRegistry.RegisterSubscriber(subscribeKey, subscriber)
 		}
 	}

@@ -15,9 +15,10 @@
 package main
 
 import (
+	"log"
+
 	"github.com/opensergo/opensergo-go/pkg/client"
 	"github.com/opensergo/opensergo-go/pkg/common/logging"
-	"log"
 
 	"github.com/opensergo/opensergo-go/pkg/api"
 	"github.com/opensergo/opensergo-go/pkg/configkind"
@@ -45,7 +46,7 @@ func StartAndSubscribeOpenSergoConfig() error {
 	// logging.NewFileLogger("./opensergo-universal-transport-service.log", logging.InfoLevel, logging.JsonFormat, true)
 
 	// Create a OpenSergoClient.
-	openSergoClient, err := client.NewOpenSergoClient("127.0.0.1", 10246)
+	openSergoClient, err := client.NewOpenSergoClient("127.0.0.1", 10246, api.WithConnectRetryTimes(5))
 	if err != nil {
 		return err
 	}
