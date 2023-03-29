@@ -17,7 +17,6 @@ package main
 import (
 	"github.com/opensergo/opensergo-go/pkg/client"
 	"github.com/opensergo/opensergo-go/pkg/common/logging"
-	"log"
 
 	"github.com/opensergo/opensergo-go/pkg/api"
 	"github.com/opensergo/opensergo-go/pkg/configkind"
@@ -32,7 +31,7 @@ func main() {
 	err := StartAndSubscribeOpenSergoConfig()
 	if err != nil {
 		// Handle error here.
-		log.Printf("Failed to StartAndSubscribeOpenSergoConfig: %s\n", err.Error())
+		logging.Error(err, "Failed to StartAndSubscribeOpenSergoConfig: %s\n")
 	}
 
 	select {}
@@ -40,9 +39,11 @@ func main() {
 
 func StartAndSubscribeOpenSergoConfig() error {
 	// Set OpenSergo console logger (optional)
-	logging.NewConsoleLogger(logging.InfoLevel, logging.SeparateFormat, true)
+	consoleLogger := logging.NewConsoleLogger(logging.InfoLevel, logging.JsonFormat, true)
+	logging.AddLogger(consoleLogger)
 	// Set OpenSergo file logger (optional)
-	// logging.NewFileLogger("./opensergo-universal-transport-service.log", logging.InfoLevel, logging.JsonFormat, true)
+	// fileLogger := logging.NewFileLogger("./opensergo-universal-transport-service.log", logging.InfoLevel, logging.JsonFormat, true)
+	//logging.AddLogger(fileLogger)
 
 	// Create a OpenSergoClient.
 	openSergoClient, err := client.NewOpenSergoClient("127.0.0.1", 10246)

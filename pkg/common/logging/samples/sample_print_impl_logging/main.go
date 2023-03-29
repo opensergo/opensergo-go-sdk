@@ -25,11 +25,11 @@ import (
 // how to print logs with the sentinel logger through logging-component in opensergo-go-common
 func main() {
 	logger, _ := logging.NewDefaultFileLogger(logging.InfoLevel)
-	logging.AppendLoggerSlice(logger)
+	logging.AddLogger(logger)
 
 	adaptor := NewLoggerAdaptor()
-	logging.ClearLoggerSlice()
-	logging.AppendLoggerSlice(adaptor)
+	logging.ClearLogger()
+	logging.AddLogger(adaptor)
 	logging.Error(errors.New("errors.New"), "this is error log implement logging in sentinelLoggerAdaptor")
 	logging.Info("this is info log implement logging in sentinelLoggerAdaptor")
 	logging.Debug("this is debug log implement logging in sentinelLoggerAdaptor")

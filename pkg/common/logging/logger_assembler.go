@@ -324,6 +324,5 @@ func AssembleMsgSeparateFormat(callerDepth int, logLevel, msg string, err error,
 		sbLog.WriteString(sbError.String())
 	}
 
-	sbLog.WriteString("\n")
 	return sbLog.String()
 }
