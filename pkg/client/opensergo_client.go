@@ -76,9 +76,9 @@ var (
 	clientPool = make(map[string]*OpenSergoClient)
 )
 
-// GetOpenSergoClientByPool returns an instance of OpenSergoClient from a pool, based on host:port,
+// GetOpenSergoClientFromPool returns an instance of OpenSergoClient from a pool, based on host:port,
 // if it doesn't exist, it will be created and reused for the next call.
-func GetOpenSergoClientByPool(host string, port uint32) (*OpenSergoClient, error) {
+func GetOpenSergoClientFromPool(host string, port uint32) (*OpenSergoClient, error) {
 	address := host + ":" + strconv.FormatUint(uint64(port), 10)
 
 	clientMu.Lock()

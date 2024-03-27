@@ -34,10 +34,10 @@ func main() {
 		logging.Error(err, "Failed to StartAndSubscribeOpenSergoConfig: %s\n")
 	}
 
-	err = StartAndSubscribeOpenSergoConfigByPool()
+	err = StartAndSubscribeOpenSergoConfigFromPool()
 	if err != nil {
 		// Handle error here.
-		logging.Error(err, "Failed to StartAndSubscribeOpenSergoConfigByPool: %s\n")
+		logging.Error(err, "Failed to StartAndSubscribeOpenSergoConfigFromPool: %s\n")
 	}
 
 	select {}
@@ -93,7 +93,7 @@ func StartAndSubscribeOpenSergoConfig() error {
 	return err
 }
 
-func StartAndSubscribeOpenSergoConfigByPool() error {
+func StartAndSubscribeOpenSergoConfigFromPool() error {
 	// Set OpenSergo console logger (optional)
 	consoleLogger := logging.NewConsoleLogger(logging.InfoLevel, logging.JsonFormat, true)
 	logging.AddLogger(consoleLogger)
@@ -102,7 +102,7 @@ func StartAndSubscribeOpenSergoConfigByPool() error {
 	//logging.AddLogger(fileLogger)
 
 	// Get a OpenSergoClient by pool.
-	openSergoClient, err := client.GetOpenSergoClientByPool("127.0.0.1", 10246)
+	openSergoClient, err := client.GetOpenSergoClientFromPool("127.0.0.1", 10246)
 	if err != nil {
 		return err
 	}
