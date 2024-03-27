@@ -34,6 +34,12 @@ func main() {
 		logging.Error(err, "Failed to StartAndSubscribeOpenSergoConfig: %s\n")
 	}
 
+	err = StartAndSubscribeOpenSergoConfigFromPool()
+	if err != nil {
+		// Handle error here.
+		logging.Error(err, "Failed to StartAndSubscribeOpenSergoConfigFromPool: %s\n")
+	}
+
 	select {}
 }
 
@@ -47,6 +53,56 @@ func StartAndSubscribeOpenSergoConfig() error {
 
 	// Create a OpenSergoClient.
 	openSergoClient, err := client.NewOpenSergoClient("127.0.0.1", 10246)
+	if err != nil {
+		return err
+	}
+
+	// Start OpenSergoClient
+	err = openSergoClient.Start()
+	if err != nil {
+		return err
+	}
+
+	// Create a SubscribeKey for FaultToleranceRule.
+	faultToleranceSubscribeKey := model.NewSubscribeKey("default", "foo-app", configkind.ConfigKindRefFaultToleranceRule{})
+	// Create a Subscriber.
+	sampleFaultToleranceRuleSubscriber := &samples.SampleFaultToleranceRuleSubscriber{}
+	// Subscribe data with the key and subscriber.
+	err = openSergoClient.SubscribeConfig(*faultToleranceSubscribeKey, api.WithSubscriber(sampleFaultToleranceRuleSubscriber))
+	if err != nil {
+		return err
+	}
+
+	// Create a SubscribeKey for RateLimitStrategy.
+	rateLimitSubscribeKey := model.NewSubscribeKey("default", "foo-app", configkind.ConfigKindRefRateLimitStrategy{})
+	// Create another Subscriber.
+	sampleRateLimitStrategySubscriber := &samples.SampleRateLimitStrategySubscriber{}
+	// Subscribe data with the key and subscriber.
+	err = openSergoClient.SubscribeConfig(*rateLimitSubscribeKey, api.WithSubscriber(sampleRateLimitStrategySubscriber))
+
+	if err != nil {
+		return err
+	}
+	// Create a SubscribeKey for TrafficRouter
+	trafficRouterSubscribeKey := model.NewSubscribeKey("default", "service-provider", configkind.ConfigKindTrafficRouterStrategy{})
+	// Create another Subscriber
+	sampleTrafficRouterSubscriber := &samples.SampleTrafficRouterSubscriber{}
+	// Subscribe data with the key and subscriber
+	err = openSergoClient.SubscribeConfig(*trafficRouterSubscribeKey, api.WithSubscriber(sampleTrafficRouterSubscriber))
+
+	return err
+}
+
+func StartAndSubscribeOpenSergoConfigFromPool() error {
+	// Set OpenSergo console logger (optional)
+	consoleLogger := logging.NewConsoleLogger(logging.InfoLevel, logging.JsonFormat, true)
+	logging.AddLogger(consoleLogger)
+	// Set OpenSergo file logger (optional)
+	// fileLogger := logging.NewFileLogger("./opensergo-universal-transport-service.log", logging.InfoLevel, logging.JsonFormat, true)
+	//logging.AddLogger(fileLogger)
+
+	// Get a OpenSergoClient by pool.
+	openSergoClient, err := client.GetOpenSergoClientFromPool("127.0.0.1", 10246)
 	if err != nil {
 		return err
 	}

@@ -17,6 +17,7 @@ package client
 import (
 	"context"
 	"strconv"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -68,6 +69,32 @@ func NewOpenSergoClient(host string, port uint32) (*OpenSergoClient, error) {
 	openSergoClient.subscribeConfigStreamObserverPtr.Store(&subscribeConfigStreamObserver{})
 	openSergoClient.subscribeConfigStreamStatus.Store(initial)
 	return openSergoClient, nil
+}
+
+var (
+	clientMu   sync.Mutex
+	clientPool = make(map[string]*OpenSergoClient)
+)
+
+// GetOpenSergoClientFromPool returns an instance of OpenSergoClient from a pool, based on host:port,
+// if it doesn't exist, it will be created and reused for the next call.
+func GetOpenSergoClientFromPool(host string, port uint32) (*OpenSergoClient, error) {
+	address := host + ":" + strconv.FormatUint(uint64(port), 10)
+
+	clientMu.Lock()
+	defer clientMu.Unlock()
+
+	if client, ok := clientPool[address]; ok {
+		return client, nil
+	}
+
+	client, err := NewOpenSergoClient(host, port)
+	if err != nil {
+		return nil, err
+	}
+	clientPool[address] = client
+
+	return client, nil
 }
 
 func (c *OpenSergoClient) SubscribeDataCache() *subscribe.SubscribeDataCache {
